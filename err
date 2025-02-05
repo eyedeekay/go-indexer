@@ -1,3 +1,0 @@
-# github.com/eyedeekay/go-indexer/lib
-lib/htmlGen.go:53:15: s.buildDirectoryTree undefined (type *Scanner has no field or method buildDirectoryTree)
-lib/htmlGen.go:75:45: undefined: DirectoryNode

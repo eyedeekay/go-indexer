@@ -101,7 +101,7 @@ func (s *Scanner) renderDirectoryTree(node *DirectoryNode) string {
 				sb.WriteString("</ul></details>")
 			}
 		}
-		sb.WriteString("</div>")
+		sb.WriteString("</div>\n")
 	}
 
 	for _, child := range node.Children {
