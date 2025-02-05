@@ -87,7 +87,7 @@ func (s *Scanner) renderDirectoryTree(node *DirectoryNode) string {
 
 	for _, file := range node.Files {
 		sb.WriteString("<div class=\"torrent-info\">")
-		sb.WriteString(fmt.Sprintf("📄 <strong>%s</strong><br>", template.HTMLEscapeString(filepath.Base(file.RelPath))))
+		sb.WriteString(fmt.Sprintf("📄 <strong><a href=\"%s\">%s</a></strong><br>", template.HTMLEscapeString(file.RelPath),template.HTMLEscapeString(filepath.Base(file.RelPath))))
 		if file.MetaInfo != nil {
 			sb.WriteString(fmt.Sprintf("Size: %s<br>", formatSize(file.MetaInfo.Size)))
 			sb.WriteString(fmt.Sprintf("InfoHash: %s<br>", template.HTMLEscapeString(file.MetaInfo.InfoHash)))
