@@ -1,7 +1,6 @@
 package indexer
 
 import (
-    "fmt"
     "html/template"
     "os"
     "path/filepath"

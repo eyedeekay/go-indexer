@@ -6,7 +6,7 @@ import (
     "log"
     "path/filepath"
 
-    "github.com/eyedeekay/go-indexer"
+    indexer "github.com/eyedeekay/go-indexer/lib"
 )
 
 func main() {

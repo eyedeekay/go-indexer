@@ -67,7 +67,7 @@ func (s *Scanner) parseTorrent(tf *TorrentFile) error {
     if info.IsDir() {
         for _, file := range info.Files {
             meta.Files = append(meta.Files, TorrentFileInfo{
-                Path: file.Path.String(),
+                Path: file.Path(info),
                 Size: file.Length,
             })
             meta.Size += file.Length
