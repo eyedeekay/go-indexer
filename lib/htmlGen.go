@@ -1,11 +1,18 @@
+// lib/htmlGen.go
 package indexer
 
 import (
-    "html/template"
-    "os"
-    "path/filepath"
-    "strings"
+	"fmt"
+	"html/template"
+	"os"
+	"path/filepath"
+	"strings"
 )
+
+// TemplateData holds the data for HTML template
+type TemplateData struct {
+	DirectoryTree template.HTML
+}
 
 const htmlTemplate = `
 <!DOCTYPE html>
@@ -42,55 +49,82 @@ const htmlTemplate = `
 </body>
 </html>`
 
+// generateHTML creates the final HTML file
 func (s *Scanner) generateHTML() error {
-    tree := s.buildDirectoryTree()
-    
-    tmpl, err := template.New("index").Parse(htmlTemplate)
-    if err != nil {
-        return err
-    }
+	tree := s.buildDirectoryTree()
+	htmlContent := s.renderDirectoryTree(tree)
 
-    f, err := os.Create(s.config.Output)
-    if err != nil {
-        return err
-    }
-    defer f.Close()
+	tmpl, err := template.New("index").Parse(htmlTemplate)
+	if err != nil {
+		return err
+	}
 
-    return tmpl.Execute(f, tree)
+	f, err := os.Create(s.config.Output)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	data := TemplateData{
+		DirectoryTree: template.HTML(htmlContent),
+	}
+
+	return tmpl.Execute(f, data)
 }
 
-type DirectoryNode struct {
-    Name     string
-    Path     string
-    Files    []TorrentFile
-    Children map[string]*DirectoryNode
+// renderDirectoryTree converts the directory tree to HTML
+func (s *Scanner) renderDirectoryTree(node *DirectoryNode) string {
+	var sb strings.Builder
+
+	id := fmt.Sprintf("dir_%p", node)
+
+	if node.Name != "" {
+		sb.WriteString("<div class=\"directory\">")
+		sb.WriteString(fmt.Sprintf("<input type=\"checkbox\" id=\"%s\" checked>", id))
+		sb.WriteString(fmt.Sprintf("<label for=\"%s\">📁 %s</label>", id, template.HTMLEscapeString(node.Name)))
+		sb.WriteString("<div class=\"contents\">")
+	}
+
+	for _, file := range node.Files {
+		sb.WriteString("<div class=\"torrent-info\">")
+		sb.WriteString(fmt.Sprintf("📄 <strong>%s</strong><br>", template.HTMLEscapeString(filepath.Base(file.RelPath))))
+		if file.MetaInfo != nil {
+			sb.WriteString(fmt.Sprintf("Size: %s<br>", formatSize(file.MetaInfo.Size)))
+			sb.WriteString(fmt.Sprintf("InfoHash: %s<br>", template.HTMLEscapeString(file.MetaInfo.InfoHash)))
+			if len(file.MetaInfo.Files) > 0 {
+				sb.WriteString("<details><summary>Files:</summary><ul>")
+				for _, f := range file.MetaInfo.Files {
+					sb.WriteString(fmt.Sprintf("<li>%s (%s)</li>",
+						template.HTMLEscapeString(f.Path),
+						formatSize(f.Size)))
+				}
+				sb.WriteString("</ul></details>")
+			}
+		}
+		sb.WriteString("</div>")
+	}
+
+	for _, child := range node.Children {
+		sb.WriteString(s.renderDirectoryTree(child))
+	}
+
+	if node.Name != "" {
+		sb.WriteString("</div></div>")
+	}
+
+	return sb.String()
 }
 
-func (s *Scanner) buildDirectoryTree() *DirectoryNode {
-    root := &DirectoryNode{
-        Name:     filepath.Base(s.config.RootDir),
-        Children: make(map[string]*DirectoryNode),
-    }
-
-    for _, file := range s.files {
-        dir := filepath.Dir(file.RelPath)
-        parts := strings.Split(dir, string(filepath.Separator))
-        
-        current := root
-        for _, part := range parts {
-            if part == "." {
-                continue
-            }
-            if _, exists := current.Children[part]; !exists {
-                current.Children[part] = &DirectoryNode{
-                    Name:     part,
-                    Children: make(map[string]*DirectoryNode),
-                }
-            }
-            current = current.Children[part]
-        }
-        current.Files = append(current.Files, file)
-    }
-
-    return root
+// formatSize converts bytes to human-readable format
+func formatSize(bytes int64) string {
+	const unit = 1024
+	if bytes < unit {
+		return fmt.Sprintf("%d B", bytes)
+	}
+	div, exp := int64(unit), 0
+	for n := bytes / unit; n >= unit; n /= unit {
+		div *= unit
+		exp++
+	}
+	return fmt.Sprintf("%.1f %cB", float64(bytes)/float64(div), "KMGTPE"[exp])
 }

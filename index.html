@@ -1,0 +1,31 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Torrent Directory</title>
+    <style>
+        .directory { margin-left: 20px; }
+        .directory label { cursor: pointer; }
+        .directory input[type="checkbox"] { display: none; }
+        .directory input:not(:checked) ~ .contents { display: none; }
+        .torrent-info { margin: 5px 0; padding: 5px; border: 1px solid #ddd; }
+        .search { margin: 20px 0; }
+        .hidden { display: none; }
+    </style>
+    <script>
+        function search() {
+            const query = document.getElementById('search').value.toLowerCase();
+            document.querySelectorAll('.torrent-info').forEach(el => {
+                const text = el.textContent.toLowerCase();
+                el.classList.toggle('hidden', !text.includes(query));
+            });
+        }
+    </script>
+</head>
+<body>
+    <div class="search">
+        <input type="text" id="search" onkeyup="search()" placeholder="Search torrents...">
+    </div>
+    <div class="directory">
+        
